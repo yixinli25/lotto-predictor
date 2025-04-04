@@ -1,5 +1,6 @@
 import os
 import requests
+from openai import OpenAI
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from os.path import join, dirname
@@ -10,6 +11,10 @@ load_dotenv(dotenv_path)
 
 past_winning_numbers = []
 past_encores = []
+
+client = OpenAI(
+    api_key=os.environ.get("OPEN_AI_API_KEY"),
+)
 
 def get_end_of_month(date):
     if date.month == 12:
@@ -61,9 +66,28 @@ def lotto_predictor():
         except Exception as e:
             raise Exception(f"Something went wrong: {e}")
         
-    print(past_winning_numbers)
-    print(past_encores)
+    prompt = f"""
+        I know it is impossible to predict the winning number for the next draw and each draw is independent of the previous draws. 
+        But you can perform a frequency analysis or use some other method to generate a prediction. I'm just playing for fun!
+        Given the following past winning numbers and encore numbers, predict the next Lotto Max numbers.
 
+        Past Winning Numbers: {', '.join(past_winning_numbers)}
+        Past Encore Numbers: {', '.join(past_encores)}
+
+        Predicted Next Winning Numbers:
+    """
+
+    try:
+        response = client.responses.create(
+            model="gpt-3.5-turbo",
+            instructions="You are an assistant helping to analyze Lotto Max numbers.",
+            input=prompt,
+        )
+
+        print(response.output_text)
+
+    except Exception as e:
+        raise Exception(f"Open AI API Call Failed. {e}")
 
 if __name__ == "__main__":
     lotto_predictor()
